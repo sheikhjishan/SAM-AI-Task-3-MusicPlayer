@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>PulsePlay · your music, your mood</title>
+  <!-- No external frameworks, only pure CSS + vanilla JS -->
+  <style>
+    /* ========== GLOBAL RESET & VARIABLES ========== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+
+    :root {
+      --bg-deep: #0b0f1c;
+      --bg-card: #141b2b;
+      --bg-elevated: #1e2a3a;
+      --accent-cyan: #3bc9db;
+      --accent-blue: #4dabf7;
+      --accent-purple: #9775fa;
+      --accent-gradient: linear-gradient(135deg, #3bc9db, #4dabf7, #9775fa);
+      --text-primary: #f8f9fc;
+      --text-secondary: #a0b3cc;
+      --text-dim: #6c7e9a;
+      --shadow-card: 0 18px 35px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.02);
+      --radius-lg: 28px;
+      --radius-md: 18px;
+      --radius-sm: 12px;
+      --transition: 0.2s ease;
+    }
+
+    body {
+      background: var(--bg-deep);
+      background-image: radial-gradient(circle at 20% 20%, rgba(59, 201, 219, 0.08) 0%, transparent 40%),
+                        radial-gradient(circle at 80% 70%, rgba(151, 117, 250, 0.08) 0%, transparent 45%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      color: var(--text-primary);
+    }
+
+    /* ========== MAIN DASHBOARD ========== */
+    .pulse-dashboard {
+      max-width: 1100px;
+      width: 100%;
+      background: rgba(18, 25, 40, 0.75);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: 40px;
+      padding: 2rem 2rem 2rem 2rem;
+      box-shadow: 0 25px 50px -8px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+    }
+
+    /* header */
+    .app-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent-gradient);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #0b0f1c;
+      box-shadow: 0 6px 14px rgba(77, 171, 247, 0.25);
+    }
+
+    .logo-text {
+      font-size: 1.9rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(to right, #ffffff, #cfe2ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+      margin-left: auto;
+      font-style: italic;
+      letter-spacing: 0.2px;
+    }
+
+    /* ========== TWO COLUMN LAYOUT ========== */
+    .player-playlist-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    /* ----- NOW PLAYING CARD ----- */
+    .now-playing-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 1.8rem;
+      box-shadow: var(--shadow-card);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      transition: box-shadow 0.3s;
+    }
+
+    .album-art-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .album-art {
+      width: 200px;
+      height: 200px;
+      border-radius: 24px;
+      object-fit: cover;
+      background: linear-gradient(145deg, #1e2a3a, #0f1622);
+      box-shadow: 0 18px 30px -8px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      transition: transform 0.25s ease, filter 0.25s;
+      aspect-ratio: 1 / 1;
+    }
+
+    .album-art:hover {
+      transform: scale(1.01);
+      filter: brightness(1.05);
+    }
+
+    .track-info {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .track-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      line-height: 1.3;
+      margin-bottom: 0.35rem;
+      word-break: break-word;
+    }
+
+    .track-artist {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+      letter-spacing: 0.2px;
+    }
+
+    /* progress + time */
+    .progress-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin: 1.8rem 0 1.2rem;
+    }
+
+    .time-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-secondary);
+      letter-spacing: 0.3px;
+      font-weight: 500;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: #202b3c;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: background 0.2s;
+      box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
+      position: relative;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: var(--accent-gradient);
+      border-radius: 40px;
+      transition: width 0.08s linear;
+      box-shadow: 0 0 8px rgba(77, 171, 247, 0.6);
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 2px 10px rgba(59, 201, 219, 0.9);
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+
+    .progress-bar-bg:hover .progress-fill::after {
+      opacity: 1;
+    }
+
+    /* control buttons */
+    .player-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.8rem;
+      margin-top: 0.8rem;
+    }
+
+    .ctrl-btn {
+      background: transparent;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 10px;
+      border-radius: 60px;
+      transition: background 0.2s, transform 0.1s;
+      color: var(--text-primary);
+      font-size: 0;
+      line-height: 0;
+    }
+
+    .ctrl-btn svg {
+      width: 32px;
+      height: 32px;
+      fill: currentColor;
+      stroke: none;
+      transition: filter 0.2s;
+    }
+
+    .ctrl-btn:hover {
+      background: rgba(255, 255, 255, 0.06);
+      transform: scale(1.03);
+    }
+
+    .ctrl-btn:active {
+      transform: scale(0.97);
+    }
+
+    .play-pause-btn {
+      background: var(--accent-gradient);
+      color: #0b0f1c;
+      padding: 12px;
+      border-radius: 50%;
+      box-shadow: 0 10px 20px -5px rgba(59, 201, 219, 0.4);
+      transition: box-shadow 0.2s, transform 0.15s;
+    }
+
+    .play-pause-btn:hover {
+      box-shadow: 0 14px 26px -6px rgba(59, 201, 219, 0.7);
+      transform: scale(1.04);
+      background: var(--accent-gradient);
+    }
+
+    .play-pause-btn svg {
+      width: 34px;
+      height: 34px;
+      fill: #0b0f1c;
+    }
+
+    .ctrl-btn svg path {
+      transition: fill 0.2s;
+    }
+
+    /* volume row */
+    .volume-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 2rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .volume-icon {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      padding: 6px;
+      border-radius: 40px;
+      transition: background 0.2s;
+      color: var(--text-secondary);
+      font-size: 0;
+    }
+
+    .volume-icon svg {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+      stroke: none;
+    }
+
+    .volume-icon:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+    }
+
+    .volume-slider {
+      flex: 1;
+      height: 6px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: #202b3c;
+      border-radius: 40px;
+      outline: none;
+      cursor: pointer;
+      box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 2px 10px rgba(59, 201, 219, 0.8);
+      cursor: pointer;
+      border: 2px solid var(--accent-cyan);
+      transition: transform 0.1s;
+    }
+
+    .volume-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      border: 2px solid var(--accent-cyan);
+      box-shadow: 0 2px 10px rgba(59, 201, 219, 0.8);
+      cursor: pointer;
+    }
+
+    /* error message */
+    .audio-error-msg {
+      font-size: 0.85rem;
+      color: #ff8787;
+      background: rgba(255, 107, 107, 0.08);
+      border-radius: 40px;
+      padding: 0.5rem 1rem;
+      margin-top: 1rem;
+      text-align: center;
+      display: none;
+      border: 1px solid rgba(255, 107, 107, 0.2);
+      backdrop-filter: blur(4px);
+    }
+
+    .audio-error-msg.visible {
+      display: block;
+    }
+
+    /* ----- PLAYLIST CARD ----- */
+    .playlist-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 1.6rem 1.2rem 1.2rem 1.2rem;
+      box-shadow: var(--shadow-card);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      height: fit-content;
+      max-height: 600px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .playlist-header {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      color: var(--text-primary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding: 0 0.3rem;
+    }
+
+    .playlist-header span {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      font-weight: 400;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 0.2rem 0.8rem;
+      border-radius: 40px;
+    }
+
+    .playlist-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      overflow-y: auto;
+      padding-right: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: #2b3b4e #141b2b;
+    }
+
+    .playlist-list::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .playlist-list::-webkit-scrollbar-track {
+      background: #141b2b;
+      border-radius: 10px;
+    }
+
+    .playlist-list::-webkit-scrollbar-thumb {
+      background: #2b3b4e;
+      border-radius: 10px;
+    }
+
+    .playlist-item {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.7rem 0.8rem;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      transition: background 0.15s, transform 0.1s;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .playlist-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.03);
+    }
+
+    .playlist-item.active {
+      background: rgba(59, 201, 219, 0.12);
+      border-left: 4px solid var(--accent-cyan);
+      border-radius: 12px;
+      box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.5);
+    }
+
+    .track-number {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      width: 26px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .playlist-item.active .track-number {
+      color: var(--accent-cyan);
+    }
+
+    .playlist-track-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .playlist-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .playlist-artist {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .playlist-duration {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 0.2rem 0.5rem;
+      border-radius: 40px;
+      letter-spacing: 0.2px;
+    }
+
+    /* responsive */
+    @media (max-width: 800px) {
+      .pulse-dashboard {
+        padding: 1.5rem;
+      }
+      .player-playlist-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      .subtitle {
+        margin-left: 0;
+        width: 100%;
+      }
+      .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.3rem;
+      }
+      .album-art {
+        width: 160px;
+        height: 160px;
+      }
+      .track-title {
+        font-size: 1.6rem;
+      }
+      .playlist-card {
+        max-height: 350px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 0.8rem;
+      }
+      .pulse-dashboard {
+        padding: 1rem;
+        border-radius: 28px;
+      }
+      .album-art {
+        width: 130px;
+        height: 130px;
+        border-radius: 20px;
+      }
+      .track-title {
+        font-size: 1.4rem;
+      }
+      .player-controls {
+        gap: 1.2rem;
+      }
+      .ctrl-btn svg {
+        width: 28px;
+        height: 28px;
+      }
+      .play-pause-btn svg {
+        width: 28px;
+        height: 28px;
+      }
+      .playlist-item {
+        padding: 0.6rem;
+        gap: 0.5rem;
+      }
+      .playlist-title {
+        font-size: 0.85rem;
+      }
+    }
+
+    /* mute state visual */
+    .volume-icon.muted svg {
+      opacity: 0.5;
+    }
+
+    /* focus visible for accessibility */
+    .ctrl-btn:focus-visible,
+    .playlist-item:focus-visible,
+    .volume-icon:focus-visible,
+    .progress-bar-bg:focus-visible,
+    .volume-slider:focus-visible {
+      outline: 2px solid var(--accent-cyan);
+      outline-offset: 3px;
+      border-radius: 40px;
+    }
+  </style>
+</head>
+<body>
+  <main class="pulse-dashboard">
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="logo">
+        <div class="logo-icon" aria-hidden="true">♪</div>
+        <span class="logo-text">PulsePlay</span>
+      </div>
+      <div class="subtitle">your music, your mood.</div>
+    </header>
+
+    <!-- TWO COLUMN GRID -->
+    <div class="player-playlist-grid">
+      <!-- NOW PLAYING SECTION -->
+      <section class="now-playing-card" aria-label="Now playing">
+        <div class="album-art-container">
+          <img 
+            id="albumArt" 
+            class="album-art" 
+            src="assets/cover1.jpg" 
+            alt="Album artwork for Midnight Drive"
+            onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22 viewBox=%220 0 200 200%22%3E%3Crect width=%22200%22 height=%22200%22 fill=%22%231e2a3a%22/%3E%3Ccircle cx=%22100%22 cy=%22100%22 r=%2250%22 fill=%22%233bc9db%22 opacity=%220.2%22/%3E%3Ctext x=%22100%22 y=%22115%22 font-family=%22system-ui%22 font-size=%2216%22 fill=%22%23a0b3cc%22 text-anchor=%22middle%22%3E♪%3C/text%3E%3C/svg%3E'"
+          >
+        </div>
+
+        <div class="track-info">
+          <h1 id="trackTitle" class="track-title">Midnight Drive</h1>
+          <p id="trackArtist" class="track-artist">Demo Artist</p>
+        </div>
+
+        <!-- PROGRESS -->
+        <div class="progress-section">
+          <div class="time-row">
+            <span id="currentTime">0:00</span>
+            <span id="totalDuration">0:00</span>
+          </div>
+          <div 
+            id="progressBar" 
+            class="progress-bar-bg" 
+            role="slider"
+            aria-label="Seek through song"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            tabindex="0"
+          >
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="player-controls">
+          <button id="prevBtn" class="ctrl-btn" aria-label="Previous song">
+            <svg viewBox="0 0 24 24" width="32" height="32">
+              <path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z"/>
+            </svg>
+          </button>
+          <button id="playPauseBtn" class="ctrl-btn play-pause-btn" aria-label="Play">
+            <!-- play icon (default) -->
+            <svg id="playPauseIcon" viewBox="0 0 24 24" width="34" height="34">
+              <path d="M8 5v14l11-7L8 5z"/>
+            </svg>
+          </button>
+          <button id="nextBtn" class="ctrl-btn" aria-label="Next song">
+            <svg viewBox="0 0 24 24" width="32" height="32">
+              <path d="M16 6h2v12h-2V6zm-2.5 6L5 6v12l8.5-6z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- VOLUME -->
+        <div class="volume-row">
+          <button id="muteBtn" class="volume-icon" aria-label="Mute">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+          </button>
+          <input 
+            type="range" 
+            id="volumeSlider" 
+            class="volume-slider" 
+            min="0" 
+            max="100" 
+            value="70" 
+            aria-label="Volume control"
+          >
+        </div>
+
+        <!-- ERROR MESSAGE -->
+        <div id="audioError" class="audio-error-msg" role="alert">
+          ⚠️ Audio file could not be loaded.
+        </div>
+      </section>
+
+      <!-- PLAYLIST SECTION -->
+      <section class="playlist-card" aria-label="Playlist">
+        <div class="playlist-header">
+          <span>PLAYLIST</span>
+          <span id="trackCount">3 tracks</span>
+        </div>
+        <ul id="playlistList" class="playlist-list">
+          <!-- dynamically rendered via JS, but static fallback is provided -->
+        </ul>
+      </section>
+    </div>
+  </main>
+
+  <!-- hidden audio element -->
+  <audio id="audioPlayer" preload="metadata"></audio>
+
+<script src="script.js"></script>
+</body>
+</html>
